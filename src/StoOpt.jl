@@ -2,6 +2,7 @@ module StoOpt
 
 using Interpolations, StatsBase, Clustering
 using EllipsisNotation
+using Distributed, SharedArrays
 
 include("struct.jl")
 

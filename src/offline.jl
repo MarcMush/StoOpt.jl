@@ -55,12 +55,37 @@ function compute_cost_to_go(sdp::SdpModel, variables::Variables, interpolation::
 
 end
 
+# """
+# original, not distributed
+# """
+# function fill_value_function!(sdp::SdpModel, variables::Variables, 
+#     value_functions::ArrayValueFunctions, interpolation::Interpolation)
+
+#     value_function = ones(size(sdp.states))
+
+#     for (state, index) in sdp.states.iterator
+
+#         variables.state = collect(state)
+#         value_function[index...] = compute_cost_to_go(sdp, variables, interpolation)
+
+#     end
+
+#     value_functions[variables.t] = value_function
+
+#     return nothing
+# end
+
+"""
+distributed with @distributed and SharedArrays
+
+allocations can probably be reduced
+"""
 function fill_value_function!(sdp::SdpModel, variables::Variables, 
 	value_functions::ArrayValueFunctions, interpolation::Interpolation)
 
-	value_function = ones(size(sdp.states))
+	value_function = SharedArray{Float64}(size(sdp.states))
 
-	for (state, index) in sdp.states.iterator
+	@sync @distributed for (state, index) in collect(sdp.states.iterator)
 
 		variables.state = collect(state)
 		value_function[index...] = compute_cost_to_go(sdp, variables, interpolation)
@@ -70,8 +95,23 @@ function fill_value_function!(sdp::SdpModel, variables::Variables,
 	value_functions[variables.t] = value_function
 
 	return nothing
-
 end
+
+
+# """
+# distributed with pmap
+# """
+# function fill_value_function!(sdp::SdpModel, variables::Variables, 
+#     value_functions::ArrayValueFunctions, interpolation::Interpolation)
+
+#     value_functions[variables.t] = pmap(Iterators.product(sdp.states.axis...)) do state
+#         variables.state = collect(state)
+#         return compute_cost_to_go(sdp, variables, interpolation)
+#     end
+
+#     return nothing
+
+# end
 
 function initialize_value_functions(sdp::SdpModel)
 

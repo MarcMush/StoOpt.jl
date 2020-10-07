@@ -14,7 +14,7 @@ mutable struct ArrayValueFunctions <: ValueFunctions
 end
 
 Base.getindex(vf::ArrayValueFunctions, t::Int64) = vf.functions[t, ..]
-Base.setindex!(vf::ArrayValueFunctions, x::Array{Float64}, t::Int64) = (vf.functions[t, ..] = x)
+Base.setindex!(vf::ArrayValueFunctions, x::AbstractArray{Float64}, t::Int64) = (vf.functions[t, ..] .= x)
 Base.:(==)(vf1::ArrayValueFunctions, vf2::ArrayValueFunctions) = (vf1.functions == vf2.functions)
 Base.size(vf::ArrayValueFunctions) = size(vf.functions)
 ArrayValueFunctions(t::Tuple{Vararg{Int64}}) = ArrayValueFunctions(zeros(t))

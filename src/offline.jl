@@ -76,26 +76,46 @@ end
 # end
 
 """
-distributed with @distributed and SharedArrays
-
-allocations can probably be reduced
+threaded with Threads.@threads
 """
 function fill_value_function!(sdp::SdpModel, variables::Variables, 
-	value_functions::ArrayValueFunctions, interpolation::Interpolation)
+    value_functions::ArrayValueFunctions, interpolation::Interpolation)
 
-	value_function = SharedArray{Float64}(size(sdp.states))
+    value_function = ones(size(sdp.states))
 
-	@sync @distributed for (state, index) in collect(sdp.states.iterator)
+    Threads.@threads for (state, index) in collect(sdp.states.iterator)
 
-		variables.state = collect(state)
-		value_function[index...] = compute_cost_to_go(sdp, variables, interpolation)
+        variables.state = collect(state)
+        value_function[index...] = compute_cost_to_go(sdp, variables, interpolation)
 
-	end
+    end
 
-	value_functions[variables.t] = value_function
+    value_functions[variables.t] = value_function
 
-	return nothing
+    return nothing
 end
+
+# """
+# distributed with @distributed and SharedArrays
+
+# allocations can probably be reduced
+# """
+# function fill_value_function!(sdp::SdpModel, variables::Variables, 
+# 	value_functions::ArrayValueFunctions, interpolation::Interpolation)
+
+# 	value_function = SharedArray{Float64}(size(sdp.states))
+
+# 	@sync @distributed for (state, index) in collect(sdp.states.iterator)
+
+# 		variables.state = collect(state)
+# 		value_function[index...] = compute_cost_to_go(sdp, variables, interpolation)
+
+# 	end
+
+# 	value_functions[variables.t] = value_function
+
+# 	return nothing
+# end
 
 
 # """
